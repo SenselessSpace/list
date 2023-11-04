@@ -1,0 +1,120 @@
+import { Note } from "./Note.js"
+
+export class NoteList {
+  _notes = []
+  _key = null
+  _def = []
+
+  constructor(container, key = null, def = []) {
+    this.container = container
+    this.list = document.createElement("div");
+    this.list.classList.add("list-group");
+
+    this._key = key
+    this._def = def
+
+    this.update()
+
+    container.innerHTML = ''
+    container.append(this.list);
+  }
+
+  // проверка списка на кол-во записей
+  checkEmpty() {
+    if (this._notes.length == 0)   { // если длина массива равна 0 то ...
+      this.empty = document.createElement('div'); 
+      this.empty.classList.add(
+        "d-flex",
+        "list-group-item",
+        "justify-content-center",
+        "align-items-center",
+        "text-secondary",
+        "bg-light",
+        "p-5"
+      );
+      
+      this.empty.textContent = 'Список пуст'
+      this.list.append(this.empty); // добавляется в список this.list
+    } else { // если нету
+      if (this.empty) {
+        this.empty.remove()
+      }
+    }
+  }
+
+  getNewId() {
+    let max = 0
+    for (const note of this._notes) {
+      if (note.id  = max) max = note.id
+    }
+    return max + 1
+  }
+  // добавление 
+  add(name, done = false) {
+    let newNote = new Note(this, name, done) // создает нот
+    newNote.id = this.getNewId() // пристаивает генерацию айди
+    this._notes.push(newNote) 
+    this.checkEmpty()
+    this.save()
+  }
+  // возвращение элемента
+  remove(value) {
+    let id = value
+    // если значение в ноте то ...
+    if (value instanceof Note) {
+      id = value.id // создает экземпляр класса нота
+    }
+    // поиск элемента
+    for (let i = 0; i < this._notes.length; i++) {
+      //  ^  проходит весь массив 
+      if (this._notes[i].id == id) { // находит элемент по айди
+        this._notes.splice(i, 1) // удаляет 
+      }
+    }
+    this.save()
+    this.checkEmpty()
+
+  }
+
+  save() {
+    if (this._key) {
+      let saveList = []
+      for (const note of this._notes) {
+        saveList.push({
+          id: note.id,
+          name: note.name,
+          done: note.done
+        })
+
+        localStorage.setItem(this._key, JSON.stringify(saveList))
+      }
+    }
+  }
+
+  update() {
+    let startList = this._def
+
+    this._note = []
+    this.list.innerHTML = ''
+
+    if (this._key) {
+      let dataLS = localStorage.getItem(this._key)
+      if (dataLS !== "" && dataLS !== null) startList = JSON.parse(dataLS)
+    }
+
+    if (startList.length > 0 ) {
+      for (const obj of startList) {
+        let newNote = new Note(this, obj.name, obj.done)
+        if (obj.id) {
+          newNote.id = obj.id
+        } else {
+          newNote.id = this.getNewId()
+        }
+        this._notes.push(newNote)
+      }
+    }
+    this.save()
+    this.checkEmpty()
+  }
+
+}
